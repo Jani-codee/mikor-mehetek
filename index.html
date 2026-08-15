@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Mikor mehetek végre, kedvesem?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink: #ff6fa8;
+    --pink2: #ff9ecb;
+    --purple: #b06cff;
+    --peach: #ffb37a;
+    --gold: #ffd27a;
+    --card: rgba(255,255,255,0.85);
+    --ink: #5b3350;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    font-family:'Baloo 2', sans-serif;
+    overflow-x:hidden;
+  }
+  body{
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    background: linear-gradient(-45deg, #ff6fa8, #b06cff, #ff9ecb, #ffb37a, #ffd27a);
+    background-size: 400% 400%;
+    animation: gradientShift 16s ease infinite;
+  }
+  @keyframes gradientShift{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+  }
+
+  /* soft glow blobs */
+  .blob{
+    position:absolute;
+    border-radius:50%;
+    filter: blur(50px);
+    opacity:0.45;
+    pointer-events:none;
+  }
+  .blob1{width:38vmax; height:38vmax; background:#ff8fd0; top:-12vmax; left:-10vmax;}
+  .blob2{width:32vmax; height:32vmax; background:#ffe08a; bottom:-14vmax; right:-8vmax;}
+  .blob3{width:26vmax; height:26vmax; background:#c9a6ff; bottom:10vmax; left:-10vmax;}
+
+  /* floating hearts & sparkles */
+  .float-item{
+    position:absolute;
+    top:110%;
+    user-select:none;
+    pointer-events:none;
+    animation-name: floatUp;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    opacity:0.85;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08));
+  }
+  @keyframes floatUp{
+    0%{ transform: translateY(0) translateX(0) rotate(0deg); opacity:0;}
+    10%{ opacity:0.9;}
+    90%{ opacity:0.6;}
+    100%{ transform: translateY(-115vh) translateX(var(--drift,20px)) rotate(12deg); opacity:0;}
+  }
+
+  .content{
+    position:relative;
+    z-index:5;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:clamp(20px,4vw,34px);
+    padding: 32px 20px;
+    text-align:center;
+    width:100%;
+    max-width:720px;
+  }
+
+  .kicker{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    font-size:clamp(11px,2.4vw,14px);
+    color:#fff;
+    background:rgba(255,255,255,0.22);
+    border:1px solid rgba(255,255,255,0.45);
+    padding:6px 16px;
+    border-radius:999px;
+    backdrop-filter: blur(6px);
+  }
+
+  h1{
+    font-family:'Dancing Script', cursive;
+    font-weight:700;
+    font-size:clamp(2.6rem, 9vw, 5.2rem);
+    line-height:1.08;
+    margin:0;
+    color:#fff;
+    text-shadow: 0 4px 24px rgba(160,40,110,0.35), 0 2px 0 rgba(255,255,255,0.15);
+  }
+  h1 .heart{
+    display:inline-block;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ transform: scale(1);}
+    50%{ transform: scale(1.18);}
+  }
+
+  .subtitle{
+    font-size:clamp(0.95rem, 2.6vw, 1.15rem);
+    color:#fff;
+    opacity:0.92;
+    max-width:480px;
+    font-weight:500;
+  }
+
+  /* countdown card on the main page */
+  .countdown-card{
+    margin-top:4px;
+    background: var(--card);
+    backdrop-filter: blur(12px);
+    border-radius:22px;
+    padding:16px 28px;
+    text-align:center;
+    box-shadow: 0 12px 34px rgba(90,20,60,0.32), inset 0 0 0 1px rgba(255,255,255,0.6);
+    opacity:0;
+    transform: translateY(10px) scale(0.96);
+    pointer-events:none;
+    transition: opacity .35s ease, transform .35s ease;
+    max-width:280px;
+  }
+  .countdown-card.show{
+    opacity:1;
+    transform: translateY(0) scale(1);
+    pointer-events:all;
+  }
+  .countdown-label{
+    font-size:0.72rem;
+    font-weight:700;
+    color:#b980a8;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+  .countdown-number{
+    font-family:'Dancing Script', cursive;
+    font-size:2.6rem;
+    font-weight:700;
+    color:var(--purple);
+    line-height:1.15;
+  }
+  .countdown-unit{
+    font-size:0.85rem;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .countdown-range{
+    font-size:0.76rem;
+    color:#a06090;
+    font-weight:600;
+  }
+
+  /* calendar trigger button */
+  .cal-trigger{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:none;
+    cursor:pointer;
+    padding:14px 26px;
+    border-radius:999px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:clamp(0.95rem, 2.6vw, 1.1rem);
+    color:var(--ink);
+    background: linear-gradient(135deg, #fff, #ffe9f4);
+    box-shadow: 0 10px 30px rgba(120,20,80,0.28), inset 0 0 0 2px rgba(255,255,255,0.6);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .cal-trigger:hover{ transform: translateY(-3px) scale(1.02); box-shadow: 0 14px 34px rgba(120,20,80,0.35);}
+  .cal-trigger:active{ transform: translateY(0) scale(0.98); }
+  .cal-trigger .ico{
+    width:26px; height:26px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:20px;
+  }
+
+  /* ---------- modal ---------- */
+  .overlay{
+    position:fixed; inset:0;
+    background: rgba(90,20,60,0.45);
+    backdrop-filter: blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    z-index:50;
+    opacity:0; pointer-events:none;
+    transition: opacity .25s ease;
+    padding: 16px;
+  }
+  .overlay.open{ opacity:1; pointer-events:all; }
+
+  .cal-card{
+    width:100%;
+    max-width:380px;
+    max-height:88vh;
+    overflow-y:auto;
+    background: var(--card);
+    backdrop-filter: blur(14px);
+    border-radius:28px;
+    padding: 22px 20px 26px;
+    box-shadow: 0 20px 60px rgba(90,20,60,0.4), inset 0 0 0 1px rgba(255,255,255,0.6);
+    transform: translateY(24px) scale(0.96);
+    opacity:0;
+    transition: transform .3s cubic-bezier(.2,.9,.3,1.3), opacity .25s ease;
+    position:relative;
+  }
+  .overlay.open .cal-card{ transform: translateY(0) scale(1); opacity:1; }
+
+  .cal-close{
+    position:absolute; top:14px; right:14px;
+    width:32px; height:32px;
+    border-radius:50%;
+    border:none;
+    background:rgba(176,108,255,0.14);
+    color:var(--ink);
+    font-size:18px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .cal-close:hover{ background:rgba(176,108,255,0.28); transform:scale(1.06);}
+
+  .cal-header{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:6px;
+  }
+  .cal-title{
+    font-family:'Dancing Script', cursive;
+    font-size:1.7rem;
+    font-weight:700;
+    color:var(--ink);
+    margin:0;
+  }
+  .cal-nav{
+    display:flex; gap:6px;
+  }
+  .cal-nav button{
+    width:30px; height:30px;
+    border-radius:50%;
+    border:none;
+    background:rgba(255,111,168,0.14);
+    color:var(--pink);
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition: background .15s ease;
+  }
+  .cal-nav button:hover{ background:rgba(255,111,168,0.28); }
+
+  .cal-month{
+    text-align:center;
+    font-weight:700;
+    color:var(--purple);
+    margin: 4px 0 14px;
+    font-size:1rem;
+    letter-spacing:0.02em;
+  }
+
+  .cal-grid{
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap:6px;
+  }
+  .cal-dow{
+    text-align:center;
+    font-size:0.72rem;
+    font-weight:700;
+    color:#b980a8;
+    padding-bottom:4px;
+  }
+  .cal-day{
+    aspect-ratio:1/1;
+    border:none;
+    border-radius:14px;
+    background: rgba(176,108,255,0.06);
+    color:var(--ink);
+    font-family:'Baloo 2', sans-serif;
+    font-weight:600;
+    font-size:0.9rem;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    transition: transform .12s ease, background .15s ease, color .15s ease;
+  }
+  .cal-day:hover{ background: rgba(255,111,168,0.18); transform: scale(1.06); }
+  .cal-day.empty{ background:transparent; cursor:default; }
+  .cal-day.empty:hover{ transform:none; }
+  .cal-day.today{ box-shadow: inset 0 0 0 2px var(--gold); }
+  .cal-day.selected{
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color:#fff;
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(176,108,255,0.45);
+  }
+  .cal-day.selected::after{
+    content:'💗';
+    position:absolute;
+    top:-9px; right:-6px;
+    font-size:12px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+  }
+
+  /* date-range styling */
+  .cal-day.in-range{
+    background: rgba(255,111,168,0.18);
+    color: var(--ink);
+    border-radius:6px;
+  }
+  .cal-day.range-start{
+    border-top-right-radius:6px;
+    border-bottom-right-radius:6px;
+  }
+  .cal-day.range-end{
+    border-top-left-radius:6px;
+    border-bottom-left-radius:6px;
+  }
+  .cal-day.range-start.range-end{
+    border-radius:14px;
+  }
+
+  /* disabled / past days */
+  .cal-day.disabled{
+    background:transparent;
+    color:#d9b8ce;
+    cursor:not-allowed;
+    opacity:0.55;
+  }
+  .cal-day.disabled:hover{ transform:none; background:transparent; }
+  .cal-day.disabled.today{ box-shadow:none; }
+
+  .cal-footer{
+    margin-top:16px;
+    text-align:center;
+    font-size:0.85rem;
+    color:#a06090;
+    font-weight:600;
+    min-height:20px;
+  }
+
+  /* confirm button + success state (stacked/overlapping so they never push each other around) */
+  .cal-actions{
+    margin-top:14px;
+    position:relative;
+    min-height:44px;
+  }
+  .confirm-btn{
+    position:absolute;
+    left:50%; top:0;
+    border:none;
+    cursor:pointer;
+    padding:11px 24px;
+    border-radius:999px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:0.95rem;
+    color:#fff;
+    white-space:nowrap;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    box-shadow: 0 8px 20px rgba(176,108,255,0.4);
+    transform: translateX(-50%) translateY(6px) scale(0.94);
+    opacity:0;
+    pointer-events:none;
+    transition: transform .25s cubic-bezier(.2,.9,.3,1.3), opacity .2s ease, box-shadow .18s ease;
+  }
+  .confirm-btn.show{
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity:1;
+    pointer-events:all;
+  }
+  .confirm-btn.show:hover{ box-shadow: 0 12px 26px rgba(176,108,255,0.5); transform: translateX(-50%) translateY(-2px) scale(1.02); }
+  .confirm-btn.show:active{ transform: translateX(-50%) scale(0.96); }
+
+  .success-msg{
+    position:absolute;
+    left:50%; top:2px;
+    width:max-content;
+    max-width:280px;
+    text-align:center;
+    font-family:'Dancing Script', cursive;
+    font-size:1.5rem;
+    font-weight:700;
+    color:var(--purple);
+    opacity:0;
+    transform: translateX(-50%) translateY(6px);
+    transition: opacity .3s ease, transform .3s ease;
+    pointer-events:none;
+  }
+  .success-msg.show{
+    opacity:1;
+    transform: translateX(-50%) translateY(0);
+  }
+  /* mood picker + note field, revealed once a full range is picked */
+  .cal-extras{
+    margin-top:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition: max-height .35s ease, opacity .3s ease, margin-top .35s ease;
+  }
+  .cal-extras.show{
+    max-height:280px;
+    opacity:1;
+    margin-top:14px;
+  }
+  .mood-row{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+  }
+  .mood-btn{
+    border:none;
+    background: rgba(176,108,255,0.08);
+    border-radius:12px;
+    width:38px; height:38px;
+    font-size:1.1rem;
+    cursor:pointer;
+    transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .mood-btn:hover{ transform: scale(1.1); }
+  .mood-btn.active{
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    transform: scale(1.12);
+    box-shadow: 0 6px 14px rgba(176,108,255,0.4);
+  }
+  .mood-btn:disabled{ opacity:0.55; cursor:not-allowed; transform:none; }
+
+  .note-input{
+    width:100%;
+    resize:none;
+    border:1.5px solid rgba(176,108,255,0.25);
+    border-radius:16px;
+    padding:10px 14px;
+    font-family:'Baloo 2', sans-serif;
+    font-size:0.85rem;
+    color:var(--ink);
+    background: rgba(255,255,255,0.65);
+    outline:none;
+    min-height:56px;
+    transition: border-color .15s ease;
+  }
+  .note-input:focus{ border-color: var(--pink); }
+  .note-input:disabled{ opacity:0.6; cursor:not-allowed; }
+
+  .recipient-input{
+    width:100%;
+    border:1.5px solid rgba(176,108,255,0.25);
+    border-radius:16px;
+    padding:10px 14px;
+    font-family:'Baloo 2', sans-serif;
+    font-size:0.82rem;
+    color:var(--ink);
+    background: rgba(255,255,255,0.65);
+    outline:none;
+    transition: border-color .15s ease;
+  }
+  .recipient-input:focus{ border-color: var(--pink); }
+  .recipient-input:disabled{ opacity:0.6; cursor:not-allowed; }
+
+  /* share / calendar-export row, revealed after confirming */
+  .post-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:8px;
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition: max-height .4s ease, opacity .3s ease, margin-top .4s ease;
+  }
+  .post-actions.show{
+    max-height:200px;
+    opacity:1;
+    margin-top:14px;
+  }
+  .action-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    border:none;
+    cursor:pointer;
+    padding:9px 16px;
+    border-radius:999px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:0.76rem;
+    color:var(--ink);
+    background: rgba(176,108,255,0.12);
+    text-decoration:none;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .action-btn:hover{ background: rgba(176,108,255,0.22); transform: translateY(-2px); }
+
+  .email-status{
+    margin-top:10px;
+    text-align:center;
+    font-size:0.78rem;
+    font-weight:700;
+    color:#a06090;
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition: max-height .3s ease, opacity .3s ease;
+  }
+  .email-status.show{
+    max-height:60px;
+    opacity:1;
+  }
+
+  .reset-link{
+    display:block;
+    margin:6px auto 0;
+    background:none;
+    border:none;
+    color:#b980a8;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:600;
+    font-size:0.78rem;
+    text-decoration:underline;
+    cursor:pointer;
+  }
+
+  .burst-heart{
+    position:fixed;
+    font-size:20px;
+    pointer-events:none;
+    z-index:99;
+    animation: burst 0.9s ease-out forwards;
+  }
+  @keyframes burst{
+    0%{ transform: translate(0,0) scale(0.6); opacity:1; }
+    100%{ transform: translate(var(--bx,0), var(--by,-80px)) scale(1.2); opacity:0; }
+  }
+
+
+</style>
+</head>
+<body>
+
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+
+  <div id="floaters"></div>
+
+  <div class="content">
+    <span class="kicker">✨ csak neked ✨</span>
+    <h1>Mikor mehetek<br>végre, kedvesem?<br><span class="heart">💗</span></h1>
+    <p class="subtitle">Kattints a naptárra, és válaszd ki, mikor jöhetek végre hozzád 🥰</p>
+
+    <button class="cal-trigger" id="openCal">
+      <span class="ico">📅</span> Mutasd a naptárt
+    </button>
+
+    <div class="countdown-card" id="countdownCard">
+      <div class="countdown-label">Már csak</div>
+      <div class="countdown-number" id="countdownNumber">–</div>
+      <div class="countdown-unit" id="countdownUnit"></div>
+      <div class="countdown-range" id="countdownRange"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="cal-card">
+      <button class="cal-close" id="closeCal">✕</button>
+      <h2 class="cal-title">Válaszd ki, mikor mehetek 💗</h2>
+      <div class="cal-header">
+        <div class="cal-nav">
+          <button id="prevMonth">‹</button>
+          <button id="nextMonth">›</button>
+        </div>
+      </div>
+      <div class="cal-month" id="monthLabel"></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-footer" id="calFooter">Válaszd ki a kezdő napot</div>
+
+      <div class="cal-extras" id="calExtras">
+        <div class="mood-row" id="moodRow">
+          <button type="button" class="mood-btn" data-mood="😍">😍</button>
+          <button type="button" class="mood-btn" data-mood="🥰">🥰</button>
+          <button type="button" class="mood-btn" data-mood="🤩">🤩</button>
+          <button type="button" class="mood-btn" data-mood="😌">😌</button>
+          <button type="button" class="mood-btn" data-mood="🙈">🙈</button>
+        </div>
+        <textarea id="noteInput" class="note-input" placeholder="Írj pár szót (opcionális)..." maxlength="140"></textarea>
+        <input type="text" id="recipientInput" class="recipient-input" placeholder="Kinek menjen az email? (email cím, vagy több, vesszővel elválasztva)" autocomplete="off">
+      </div>
+
+      <div class="cal-actions">
+        <button class="confirm-btn" id="confirmBtn">Elküldöm 💌</button>
+        <div class="success-msg" id="successMsg">Nagyon várom! 💕</div>
+      </div>
+
+      <div class="email-status" id="emailStatus"></div>
+
+      <div class="post-actions" id="postActions">
+        <a class="action-btn" id="emailFallbackBtn" style="display:none;">✉️ Email megnyitása</a>
+        <button type="button" class="action-btn" id="icsBtn">📅 Naptárba mentés</button>
+      </div>
+
+      <button class="reset-link" id="resetLink" style="display:none;">Új dátum választása</button>
+    </div>
+  </div>
+
+<!-- Firebase (megosztott, eszközök közötti tárolás) és EmailJS (automatikus emailküldés) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<script>
+  // ====================================================================================
+  // BEÁLLÍTÁSOK — ide másold be a saját, ingyenes Firebase és EmailJS kulcsaidat.
+  // Amíg ezek "IDE_JÖN" placeholderek maradnak, az oldal simán működik tovább is,
+  // csak eszközönként külön emlékszik a dátumra, és az email helyett egy előre
+  // kitöltött levelet nyit meg, amit neked kell elküldened.
+  // ====================================================================================
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA59ZA7o8MpD9KpQQJaIi9ixb02wGIvA0o",
+    authDomain: "mikor-mehetek.firebaseapp.com",
+    projectId: "mikor-mehetek",
+    storageBucket: "mikor-mehetek.firebasestorage.app",
+    messagingSenderId: "982007810631",
+    appId: "1:982007810631:web:7310ccee44d80519fabf62"
+  };
+
+  const EMAILJS_PUBLIC_KEY = "Hk0QqqlUfoOx0Xb9F";
+  const EMAILJS_SERVICE_ID = "service_7rv4wop";
+  const EMAILJS_TEMPLATE_ID = "template_ukyedoj";
+  const NOTIFY_EMAIL = "pappjanosdavid@gmail.com";
+  // ====================================================================================
+
+  function isFirebaseConfigured(){
+    return FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== 'IDE_JÖN';
+  }
+  function isEmailJsConfigured(){
+    return typeof emailjs !== 'undefined' && EMAILJS_SERVICE_ID && EMAILJS_SERVICE_ID !== 'IDE_JÖN';
+  }
+
+  let db = null;
+  if(isFirebaseConfigured() && typeof firebase !== 'undefined'){
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.firestore();
+    } catch(e){ console.warn('Firebase init hiba:', e); }
+  }
+  if(isEmailJsConfigured()){
+    try{ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); } catch(e){ console.warn('EmailJS init hiba:', e); }
+  }
+
+  // floating hearts/sparkles background
+  const floaters = document.getElementById('floaters');
+  const symbols = ['💗','💖','💕','💞','❤️'];
+  const count = window.innerWidth < 600 ? 10 : 18;
+  for(let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className = 'float-item';
+    el.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+    const size = 14 + Math.random()*20;
+    el.style.fontSize = size + 'px';
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.setProperty('--drift', (Math.random()*80 - 40) + 'px');
+    const duration = 9 + Math.random()*10;
+    el.style.animationDuration = duration + 's';
+    el.style.animationDelay = (Math.random()*duration) + 's';
+    floaters.appendChild(el);
+  }
+
+  // calendar logic
+  const overlay = document.getElementById('overlay');
+  const openBtn = document.getElementById('openCal');
+  const closeBtn = document.getElementById('closeCal');
+  const grid = document.getElementById('calGrid');
+  const monthLabel = document.getElementById('monthLabel');
+  const footer = document.getElementById('calFooter');
+  const prevBtn = document.getElementById('prevMonth');
+  const nextBtn = document.getElementById('nextMonth');
+  const confirmBtn = document.getElementById('confirmBtn');
+  const successMsg = document.getElementById('successMsg');
+  const resetLink = document.getElementById('resetLink');
+  const calExtras = document.getElementById('calExtras');
+  const moodBtns = document.querySelectorAll('.mood-btn');
+  const noteInput = document.getElementById('noteInput');
+  const recipientInput = document.getElementById('recipientInput');
+  const postActions = document.getElementById('postActions');
+  const emailFallbackBtn = document.getElementById('emailFallbackBtn');
+  const emailStatus = document.getElementById('emailStatus');
+  const icsBtn = document.getElementById('icsBtn');
+  const countdownCard = document.getElementById('countdownCard');
+  const countdownNumber = document.getElementById('countdownNumber');
+  const countdownUnit = document.getElementById('countdownUnit');
+  const countdownRange = document.getElementById('countdownRange');
+
+  const dowNames = ['H','K','Sze','Cs','P','Szo','V'];
+  const monthNames = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+  const monthNamesShort = ['jan.','febr.','márc.','ápr.','máj.','jún.','júl.','aug.','szept.','okt.','nov.','dec.'];
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  let viewYear = today.getFullYear();
+  let viewMonth = today.getMonth();
+
+  let rangeStart = null; // Date
+  let rangeEnd = null;   // Date
+  let confirmed = false;
+
+  // extras state
+  let selectedMood = null;
+  let noteText = '';
+  let recipientText = NOTIFY_EMAIL;
+
+  // snapshot taken at the moment of confirming (used for share links / ics / countdown)
+  let confirmedName = '', confirmedNote = '', confirmedMood = '💗', confirmedRecipient = NOTIFY_EMAIL;
+  let confirmedStart = null, confirmedEnd = null;
+  let countdownInterval = null;
+
+  function dateKey(d){ return d.getTime(); }
+
+  function fmt(d){
+    return `${d.getDate()}. ${monthNamesShort[d.getMonth()]}`;
+  }
+
+  function longFmt(d){
+    return `${d.getFullYear()}. ${monthNames[d.getMonth()]} ${d.getDate()}.`;
+  }
+
+  function dayCount(a,b){
+    return Math.round((b - a) / 86400000) + 1;
+  }
+
+  function updateFooterAndActions(){
+    if(!rangeStart){
+      footer.textContent = 'Válaszd ki a kezdő napot';
+      confirmBtn.classList.remove('show');
+      calExtras.classList.remove('show');
+    } else if(rangeStart && !rangeEnd){
+      footer.textContent = `Kezdő nap: ${fmt(rangeStart)} — most válaszd ki a záró napot`;
+      confirmBtn.classList.remove('show');
+      calExtras.classList.remove('show');
+    } else {
+      const n = dayCount(rangeStart, rangeEnd);
+      footer.textContent = `Kiválasztva: ${fmt(rangeStart)} – ${fmt(rangeEnd)} (${n} nap)`;
+      if(!confirmed){
+        confirmBtn.classList.add('show');
+        calExtras.classList.add('show');
+      }
+    }
+  }
+
+  function renderCalendar(){
+    grid.innerHTML = '';
+    dowNames.forEach(d=>{
+      const el = document.createElement('div');
+      el.className = 'cal-dow';
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    // Monday-first offset
+    let startOffset = firstDay.getDay() - 1;
+    if(startOffset < 0) startOffset = 6;
+
+    const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+
+    for(let i=0;i<startOffset;i++){
+      const empty = document.createElement('div');
+      empty.className = 'cal-day empty';
+      grid.appendChild(empty);
+    }
+
+    for(let d=1; d<=daysInMonth; d++){
+      const btn = document.createElement('button');
+      btn.className = 'cal-day';
+      btn.textContent = d;
+
+      const thisDate = new Date(viewYear, viewMonth, d);
+      const isPast = thisDate < today;
+      const isToday = dateKey(thisDate) === dateKey(today);
+
+      if(isPast){
+        btn.classList.add('disabled');
+        btn.disabled = true;
+      }
+      if(isToday) btn.classList.add('today');
+
+      if(rangeStart && dateKey(thisDate) === dateKey(rangeStart)){
+        btn.classList.add('selected','range-start');
+      }
+      if(rangeEnd && dateKey(thisDate) === dateKey(rangeEnd)){
+        btn.classList.add('selected','range-end');
+      }
+      if(rangeStart && rangeEnd && thisDate > rangeStart && thisDate < rangeEnd){
+        btn.classList.add('in-range');
+      }
+
+      if(!isPast){
+        btn.addEventListener('click', ()=>{
+          if(confirmed) return; // locked after confirming, use "Új dátum" to reset
+          if(!rangeStart || (rangeStart && rangeEnd)){
+            // start a fresh selection
+            rangeStart = thisDate;
+            rangeEnd = null;
+          } else {
+            // rangeStart set, no rangeEnd yet
+            if(thisDate < rangeStart){
+              rangeEnd = rangeStart;
+              rangeStart = thisDate;
+            } else {
+              rangeEnd = thisDate;
+            }
+          }
+          renderCalendar();
+          updateFooterAndActions();
+        });
+      }
+
+      grid.appendChild(btn);
+    }
+
+    monthLabel.textContent = `${monthNames[viewMonth]} ${viewYear}`;
+  }
+
+  function burstHearts(originEl){
+    const rect = originEl.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const hearts = ['💗','💖','💕','💞'];
+    for(let i=0;i<10;i++){
+      const h = document.createElement('div');
+      h.className = 'burst-heart';
+      h.textContent = hearts[Math.floor(Math.random()*hearts.length)];
+      h.style.left = cx + 'px';
+      h.style.top = cy + 'px';
+      const angle = Math.random()*Math.PI*2;
+      const dist = 40 + Math.random()*50;
+      h.style.setProperty('--bx', Math.cos(angle)*dist + 'px');
+      h.style.setProperty('--by', Math.sin(angle)*dist - 30 + 'px');
+      document.body.appendChild(h);
+      setTimeout(()=> h.remove(), 950);
+    }
+  }
+
+  // ---- mood picker (single choice) ----
+  moodBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(confirmed) return;
+      const m = btn.dataset.mood;
+      if(selectedMood === m){
+        selectedMood = null;
+        btn.classList.remove('active');
+      } else {
+        selectedMood = m;
+        moodBtns.forEach(b=> b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+    });
+  });
+
+  // ---- note field ----
+  noteInput.addEventListener('input', ()=>{ noteText = noteInput.value; });
+
+  // ---- recipient field(s) ----
+  recipientInput.value = NOTIFY_EMAIL;
+  recipientInput.addEventListener('input', ()=>{
+    recipientText = recipientInput.value.trim() || NOTIFY_EMAIL;
+  });
+
+  // ---- email: automatikus küldés EmailJS-sel, mailto: tartalék, ha még nincs beállítva ----
+  function rangeTextOf(start, end){
+    return dateKey(start) === dateKey(end)
+      ? longFmt(start)
+      : `${longFmt(start)} – ${longFmt(end)}`;
+  }
+
+  function buildMailtoFallback(){
+    const rangeText = rangeTextOf(confirmedStart, confirmedEnd);
+    let msg = `Szia ${confirmedName}! ${confirmedMood}\n\nEkkor jövök hozzád: ${rangeText}`;
+    if(confirmedNote) msg += `\n\n${confirmedNote}`;
+    msg += `\n\nMár nagyon várom! 💕`;
+    // a mailto: cím részébe NEM kódoljuk a vesszőket, hogy több cím esetén is jól működjön
+    emailFallbackBtn.href = `mailto:${confirmedRecipient}?subject=${encodeURIComponent('Mikor mehetek végre? 💗')}&body=${encodeURIComponent(msg)}`;
+  }
+
+  function sendConfirmationEmail(){
+    const rangeText = rangeTextOf(confirmedStart, confirmedEnd);
+    emailStatus.textContent = '📧 Email küldése…';
+    emailStatus.classList.add('show');
+    emailFallbackBtn.style.display = 'none';
+
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: confirmedRecipient,
+      range_text: rangeText,
+      note: confirmedNote || '(nincs jegyzet)',
+      mood: confirmedMood
+    }).then(()=>{
+      emailStatus.textContent = '📧 Email automatikusan elküldve ✅';
+    }).catch(err=>{
+      console.warn('EmailJS hiba:', err);
+      emailStatus.textContent = '⚠️ Nem sikerült automatikusan elküldeni — próbáld manuálisan:';
+      buildMailtoFallback();
+      emailFallbackBtn.style.display = 'inline-flex';
+    });
+  }
+
+  // decides which email UI to show: automatic status, or the manual mailto: fallback button
+  function updateEmailActionUI(){
+    if(isEmailJsConfigured()){
+      emailFallbackBtn.style.display = 'none';
+      if(!emailStatus.textContent){
+        emailStatus.textContent = '📧 Email automatikusan elküldve ✅';
+      }
+      emailStatus.classList.add('show');
+    } else {
+      emailStatus.classList.remove('show');
+      buildMailtoFallback();
+      emailFallbackBtn.style.display = 'inline-flex';
+    }
+  }
+
+  // ---- Firestore: eszközök közötti megosztott mentés ----
+  const planDocRef = () => db.collection('plans').doc('current');
+
+  function saveRemotePlan(){
+    if(!db) return;
+    planDocRef().set({
+      start: confirmedStart.toISOString(),
+      end: confirmedEnd.toISOString(),
+      note: confirmedNote,
+      mood: confirmedMood,
+      to: confirmedRecipient,
+      confirmedAt: new Date().toISOString()
+    }).catch(e=> console.warn('Nem sikerült elmenteni a dátumot:', e));
+  }
+
+  function clearRemotePlan(){
+    if(!db) return;
+    planDocRef().delete().catch(e=> console.warn('Nem sikerült törölni a mentett dátumot:', e));
+  }
+
+  // applies an already-confirmed plan to the UI (used both after a fresh confirm and when
+  // loading/syncing a plan that was confirmed on another device)
+  function showConfirmedUI(){
+    const n = dayCount(confirmedStart, confirmedEnd);
+    footer.textContent = `Kiválasztva: ${fmt(confirmedStart)} – ${fmt(confirmedEnd)} (${n} nap)`;
+    calExtras.classList.remove('show');
+    confirmBtn.classList.remove('show');
+    successMsg.classList.add('show');
+    resetLink.style.display = 'inline-block';
+    postActions.classList.add('show');
+
+    noteInput.value = confirmedNote;
+    noteInput.disabled = true;
+    moodBtns.forEach(b=>{
+      b.classList.toggle('active', b.dataset.mood === confirmedMood);
+      b.disabled = true;
+    });
+    recipientInput.value = confirmedRecipient;
+    recipientInput.disabled = true;
+
+    renderCalendar();
+    startCountdown();
+  }
+
+  function loadRemotePlan(){
+    if(!db) return;
+    planDocRef().onSnapshot(doc=>{
+      if(!doc.exists) return;
+      const data = doc.data();
+      if(!data.start || !data.end) return;
+
+      rangeStart = new Date(data.start);
+      rangeEnd = new Date(data.end);
+      confirmedStart = new Date(data.start);
+      confirmedEnd = new Date(data.end);
+      confirmedNote = data.note || '';
+      confirmedMood = data.mood || '💗';
+      confirmedRecipient = data.to || NOTIFY_EMAIL;
+      confirmedName = 'kedvesem';
+      selectedMood = confirmedMood;
+      noteText = confirmedNote;
+      recipientText = confirmedRecipient;
+      confirmed = true;
+
+      viewYear = confirmedStart.getFullYear();
+      viewMonth = confirmedStart.getMonth();
+
+      updateEmailActionUI();
+      showConfirmedUI();
+    }, err=> console.warn('Nem sikerült betölteni a mentett dátumot:', err));
+  }
+
+  // ---- .ics calendar export ----
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function icsDate(d){ return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`; }
+
+  icsBtn.addEventListener('click', ()=>{
+    if(!confirmedStart || !confirmedEnd) return;
+    const endExclusive = new Date(confirmedEnd);
+    endExclusive.setDate(endExclusive.getDate() + 1); // DTEND is exclusive for all-day events
+
+    const uid = `mikor-mehetek-${Date.now()}@kedvesem`;
+    const dtstamp = icsDate(new Date()) + 'T000000Z';
+    const desc = (confirmedNote || 'Nálad vagyok!').replace(/\n/g, '\\n');
+
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//mikor-mehetek-kedvesem//HU',
+      'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${dtstamp}`,
+      `DTSTART;VALUE=DATE:${icsDate(confirmedStart)}`,
+      `DTEND;VALUE=DATE:${icsDate(endExclusive)}`,
+      `SUMMARY:Nálad vagyok\\, ${confirmedName} ${confirmedMood}`,
+      `DESCRIPTION:${desc}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mikor-mehetek.ics';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 1000);
+  });
+
+  // ---- countdown card on the main page ----
+  function updateCountdown(){
+    if(!confirmedStart || !confirmedEnd) return;
+
+    countdownRange.textContent = dateKey(confirmedStart) === dateKey(confirmedEnd)
+      ? longFmt(confirmedStart)
+      : `${longFmt(confirmedStart)} – ${longFmt(confirmedEnd)}`;
+
+    const now = new Date();
+    const target = new Date(confirmedStart); // midnight of the first day
+    const diffMs = target - now;
+
+    if(diffMs <= 0){
+      const endOfRange = new Date(confirmedEnd);
+      endOfRange.setHours(23,59,59,999);
+      if(now <= endOfRange){
+        countdownNumber.textContent = '🎉';
+        countdownUnit.textContent = 'Ma van a nap!';
+      } else {
+        countdownNumber.textContent = '💗';
+        countdownUnit.textContent = 'Már együtt voltunk';
+      }
+      return;
+    }
+
+    const totalMin = Math.floor(diffMs / 60000);
+    const days = Math.floor(totalMin / 1440);
+    const hours = Math.floor((totalMin % 1440) / 60);
+    const mins = totalMin % 60;
+
+    if(days > 0){
+      countdownNumber.textContent = days;
+      countdownUnit.textContent = `nap és ${hours} óra van hátra`;
+    } else if(hours > 0){
+      countdownNumber.textContent = hours;
+      countdownUnit.textContent = `óra ${mins} perc van hátra`;
+    } else {
+      countdownNumber.textContent = mins;
+      countdownUnit.textContent = 'perc van hátra';
+    }
+  }
+
+  function startCountdown(){
+    countdownCard.classList.add('show');
+    updateCountdown();
+    if(countdownInterval) clearInterval(countdownInterval);
+    countdownInterval = setInterval(updateCountdown, 30000);
+  }
+
+  confirmBtn.addEventListener('click', ()=>{
+    if(!rangeStart || !rangeEnd) return;
+    confirmed = true;
+    burstHearts(confirmBtn);
+
+    // snapshot the confirmed choice
+    confirmedName = 'kedvesem';
+    confirmedNote = noteText.trim();
+    confirmedMood = selectedMood || '💗';
+    confirmedRecipient = recipientText.trim() || NOTIFY_EMAIL;
+    confirmedStart = new Date(rangeStart);
+    confirmedEnd = new Date(rangeEnd);
+
+    emailStatus.textContent = '';
+    showConfirmedUI();
+
+    saveRemotePlan();
+
+    if(isEmailJsConfigured()){
+      sendConfirmationEmail();
+    } else {
+      updateEmailActionUI();
+    }
+  });
+
+  resetLink.addEventListener('click', ()=>{
+    rangeStart = null;
+    rangeEnd = null;
+    confirmed = false;
+    successMsg.classList.remove('show');
+    resetLink.style.display = 'none';
+    postActions.classList.remove('show');
+    calExtras.classList.remove('show');
+    emailStatus.classList.remove('show');
+    emailStatus.textContent = '';
+
+    noteInput.value = '';
+    noteText = '';
+    noteInput.disabled = false;
+    selectedMood = null;
+    moodBtns.forEach(b=>{ b.classList.remove('active'); b.disabled = false; });
+
+    recipientInput.value = NOTIFY_EMAIL;
+    recipientText = NOTIFY_EMAIL;
+    recipientInput.disabled = false;
+
+    countdownCard.classList.remove('show');
+    if(countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
+
+    clearRemotePlan();
+
+    renderCalendar();
+    updateFooterAndActions();
+  });
+
+  prevBtn.addEventListener('click', ()=>{
+    viewMonth--;
+    if(viewMonth<0){ viewMonth=11; viewYear--; }
+    renderCalendar();
+  });
+  nextBtn.addEventListener('click', ()=>{
+    viewMonth++;
+    if(viewMonth>11){ viewMonth=0; viewYear++; }
+    renderCalendar();
+  });
+
+  openBtn.addEventListener('click', ()=>{
+    overlay.classList.add('open');
+    renderCalendar();
+  });
+  closeBtn.addEventListener('click', ()=> overlay.classList.remove('open'));
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.classList.remove('open'); });
+
+  renderCalendar();
+  loadRemotePlan();
+</script>
+
+</body>
+</html>
