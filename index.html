@@ -616,7 +616,8 @@
 
       <div class="post-actions" id="postActions">
         <a class="action-btn" id="emailFallbackBtn" style="display:none;">✉️ Email megnyitása</a>
-        <button type="button" class="action-btn" id="icsBtn">📅 Naptárba mentés</button>
+        <a class="action-btn" id="googleCalBtn" target="_blank" rel="noopener">🟦 Google Naptár</a>
+        <button type="button" class="action-btn" id="icsBtn">🍏 Naptárba mentés (.ics)</button>
       </div>
 
       <button class="reset-link" id="resetLink" style="display:none;">Új dátum választása</button>
@@ -706,6 +707,7 @@
   const emailFallbackBtn = document.getElementById('emailFallbackBtn');
   const emailStatus = document.getElementById('emailStatus');
   const icsBtn = document.getElementById('icsBtn');
+  const googleCalBtn = document.getElementById('googleCalBtn');
   const countdownCard = document.getElementById('countdownCard');
   const countdownNumber = document.getElementById('countdownNumber');
   const countdownUnit = document.getElementById('countdownUnit');
@@ -978,6 +980,7 @@
     recipientInput.value = confirmedRecipient;
     recipientInput.disabled = true;
 
+    buildGoogleCalendarLink();
     renderCalendar();
     startCountdown();
   }
@@ -1013,6 +1016,27 @@
   // ---- .ics calendar export ----
   function pad(n){ return String(n).padStart(2,'0'); }
   function icsDate(d){ return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`; }
+
+  // ---- Google Naptár "gyors hozzáadás" link — nem az iOS .ics-kezelésén megy át,
+  // egyenesen a Google Naptár előre kitöltött mentés-képernyőjét nyitja meg ----
+  function buildGoogleCalendarLink(){
+    if(!confirmedStart || !confirmedEnd) return;
+    const endExclusive = new Date(confirmedEnd);
+    endExclusive.setDate(endExclusive.getDate() + 1); // Google is kizáró végdátumot vár egész napos eseménynél
+
+    const title = `Nálad vagyok, ${confirmedName} ${confirmedMood}`;
+    const details = confirmedNote || 'Nálad vagyok!';
+    const dates = `${icsDate(confirmedStart)}/${icsDate(endExclusive)}`;
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: title,
+      dates: dates,
+      details: details
+    });
+
+    googleCalBtn.href = `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
 
   icsBtn.addEventListener('click', ()=>{
     if(!confirmedStart || !confirmedEnd) return;
