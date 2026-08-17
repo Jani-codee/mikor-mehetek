@@ -648,6 +648,11 @@
   const EMAILJS_SERVICE_ID = "service_7rv4wop";
   const EMAILJS_TEMPLATE_ID = "template_ukyedoj";
   const NOTIFY_EMAIL = "pappjanosdavid@gmail.com";
+
+  // A Cloudflare Workers szerver-funkció URL-je, ami valódi text/calendar
+  // fejléccel szolgálja ki a .ics fájlt — ez kell ahhoz, hogy iPhone-on tényleg
+  // felugorjon a natív "Hozzáadás a Naptárhoz" képernyő (lásd cloudflare-utmutato.md).
+  const ICS_WORKER_URL = "https://silent-bread-8c6d.pappjanosdavid2.workers.dev";
   // ====================================================================================
 
   function isFirebaseConfigured(){
@@ -655,6 +660,9 @@
   }
   function isEmailJsConfigured(){
     return typeof emailjs !== 'undefined' && EMAILJS_SERVICE_ID && EMAILJS_SERVICE_ID !== 'IDE_JÖN';
+  }
+  function isIcsWorkerConfigured(){
+    return ICS_WORKER_URL && ICS_WORKER_URL !== 'IDE_JÖN';
   }
 
   let db = null;
@@ -1019,9 +1027,29 @@
     const endExclusive = new Date(confirmedEnd);
     endExclusive.setDate(endExclusive.getDate() + 1); // DTEND is exclusive for all-day events
 
+    const summary = `Nálad vagyok, ${confirmedName} ${confirmedMood}`;
+    const description = confirmedNote || 'Nálad vagyok!';
+
+    if(isIcsWorkerConfigured()){
+      // Ez a "valódi" út: egy tényleges szerver adja vissza a .ics fájlt helyes
+      // text/calendar fejléccel, közvetlen navigációval. Ezt ismeri fel az iOS
+      // natívan (Quick Look "Hozzáadás a Naptárhoz"), pont mint a Neptun rendszernél.
+      const params = new URLSearchParams({
+        start: icsDate(confirmedStart),
+        end: icsDate(endExclusive),
+        summary: summary,
+        description: description
+      });
+      window.location.href = `${ICS_WORKER_URL}?${params.toString()}`;
+      return;
+    }
+
+    // Tartalék, amíg a szerver-funkció (lásd cloudflare-utmutato.md) nincs beállítva.
+    // Ez kliens-oldali blob/data URI, amit iOS nem mindig ismer fel naptáreseményként —
+    // ezért nem helyettesíti a fenti megoldást, csak addig működik, amíg az be nem áll.
     const uid = `mikor-mehetek-${Date.now()}@kedvesem`;
     const dtstamp = icsDate(new Date()) + 'T000000Z';
-    const desc = (confirmedNote || 'Nálad vagyok!').replace(/\n/g, '\\n');
+    const desc = description.replace(/\n/g, '\\n');
 
     const ics = [
       'BEGIN:VCALENDAR',
@@ -1033,14 +1061,12 @@
       `DTSTAMP:${dtstamp}`,
       `DTSTART;VALUE=DATE:${icsDate(confirmedStart)}`,
       `DTEND;VALUE=DATE:${icsDate(endExclusive)}`,
-      `SUMMARY:Nálad vagyok\\, ${confirmedName} ${confirmedMood}`,
+      `SUMMARY:${summary.replace(/,/g, '\\,')}`,
       `DESCRIPTION:${desc}`,
       'END:VEVENT',
       'END:VCALENDAR'
     ].join('\r\n');
 
-    // iOS/iPadOS: a blob: URL-eket Safari gyakran sima fájlként kezeli, "Hozzáadás"
-    // gomb nélkül. Egy data: URI-t megbízhatóbban ismer fel naptáreseményként.
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // újabb iPadOS is Mac-nek jelentkezik be
 
