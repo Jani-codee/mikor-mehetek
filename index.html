@@ -1041,13 +1041,26 @@
 
     const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mikor-mehetek.ics';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=> URL.revokeObjectURL(url), 1000);
+
+    // iOS/iPadOS: ha kényszerített letöltésként (download attribútummal) küldjük,
+    // Safari csak egy olvasható előnézetet mutat "Hozzáadás" gomb nélkül. Ha viszont
+    // közvetlenül megnyitjuk a blob URL-t, Safari felismeri, hogy naptáresemény,
+    // és felajánlja a "Hozzáadás a Naptárhoz" képernyőt.
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // újabb iPadOS is Mac-nek jelentkezik be
+
+    if(isIOS){
+      window.location.href = url;
+      setTimeout(()=> URL.revokeObjectURL(url), 4000);
+    } else {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'mikor-mehetek.ics';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=> URL.revokeObjectURL(url), 1000);
+    }
   });
 
   // ---- countdown card on the main page ----
