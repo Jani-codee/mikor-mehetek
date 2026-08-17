@@ -1039,20 +1039,16 @@
       'END:VCALENDAR'
     ].join('\r\n');
 
-    const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-
-    // iOS/iPadOS: ha kényszerített letöltésként (download attribútummal) küldjük,
-    // Safari csak egy olvasható előnézetet mutat "Hozzáadás" gomb nélkül. Ha viszont
-    // közvetlenül megnyitjuk a blob URL-t, Safari felismeri, hogy naptáresemény,
-    // és felajánlja a "Hozzáadás a Naptárhoz" képernyőt.
+    // iOS/iPadOS: a blob: URL-eket Safari gyakran sima fájlként kezeli, "Hozzáadás"
+    // gomb nélkül. Egy data: URI-t megbízhatóbban ismer fel naptáreseményként.
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // újabb iPadOS is Mac-nek jelentkezik be
 
     if(isIOS){
-      window.location.href = url;
-      setTimeout(()=> URL.revokeObjectURL(url), 4000);
+      window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
     } else {
+      const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'mikor-mehetek.ics';
