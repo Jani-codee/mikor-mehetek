@@ -553,6 +553,44 @@
     100%{ transform: translate(var(--bx,0), var(--by,-80px)) scale(1.2); opacity:0; }
   }
 
+  /* ---- "hiányollak" figyelmeztető, ha 2 hete nem választott új napot ---- */
+  .neglect-card{
+    text-align:center;
+    padding: 32px 22px 26px;
+  }
+  .neglect-emoji{
+    font-size:3rem;
+    margin-bottom:8px;
+    animation: neglectWobble 1.6s ease-in-out infinite;
+  }
+  @keyframes neglectWobble{
+    0%, 100%{ transform: rotate(0deg); }
+    25%{ transform: rotate(-8deg); }
+    75%{ transform: rotate(8deg); }
+  }
+  .neglect-text{
+    font-family:'Dancing Script', cursive;
+    font-size:1.6rem;
+    font-weight:700;
+    color:var(--purple);
+    margin: 4px 0 22px;
+    line-height:1.3;
+  }
+  .neglect-btn{
+    border:none;
+    cursor:pointer;
+    padding:12px 26px;
+    border-radius:999px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:0.95rem;
+    color:#fff;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    box-shadow: 0 8px 20px rgba(176,108,255,0.4);
+    transition: transform .15s ease, box-shadow .18s ease;
+  }
+  .neglect-btn:hover{ box-shadow: 0 12px 26px rgba(176,108,255,0.5); transform: translateY(-2px) scale(1.02); }
+  .neglect-btn:active{ transform: scale(0.96); }
 
 </style>
 </head>
@@ -620,6 +658,15 @@
       </div>
 
       <button class="reset-link" id="resetLink" style="display:none;">Új dátum választása</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="neglectOverlay">
+    <div class="cal-card neglect-card">
+      <button class="cal-close" id="closeNeglect">✕</button>
+      <div class="neglect-emoji">🥺</div>
+      <p class="neglect-text">Jól eltetted,<br>ennyit nem bíroook ki 🥺</p>
+      <button type="button" class="neglect-btn" id="neglectOkBtn">Bocsi, tudom 💕</button>
     </div>
   </div>
 
@@ -718,6 +765,9 @@
   const countdownNumber = document.getElementById('countdownNumber');
   const countdownUnit = document.getElementById('countdownUnit');
   const countdownRange = document.getElementById('countdownRange');
+  const neglectOverlay = document.getElementById('neglectOverlay');
+  const closeNeglect = document.getElementById('closeNeglect');
+  const neglectOkBtn = document.getElementById('neglectOkBtn');
 
   const dowNames = ['H','K','Sze','Cs','P','Szo','V'];
   const monthNames = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
@@ -966,6 +1016,23 @@
     planDocRef().delete().catch(e=> console.warn('Nem sikerült törölni a mentett dátumot:', e));
   }
 
+  // ---- "ennyit nem bírok ki" figyelmeztetés, ha a kiválasztott nap 2 hétnél messzebb van ----
+  const FAR_DATE_WARNING_DAYS = 14;
+  let lastFarWarnKey = null; // ne dobja fel újra ugyanarra a már megjelenített dátumra
+
+  function checkFarDateWarning(){
+    if(!confirmedStart) return;
+    const target = new Date(confirmedStart);
+    target.setHours(0,0,0,0);
+    const daysUntil = Math.round((target - today) / 86400000);
+
+    const key = dateKey(confirmedStart) + '_' + dateKey(confirmedEnd);
+    if(daysUntil > FAR_DATE_WARNING_DAYS && lastFarWarnKey !== key){
+      lastFarWarnKey = key;
+      neglectOverlay.classList.add('open');
+    }
+  }
+
   // applies an already-confirmed plan to the UI (used both after a fresh confirm and when
   // loading/syncing a plan that was confirmed on another device)
   function showConfirmedUI(){
@@ -988,6 +1055,7 @@
 
     renderCalendar();
     startCountdown();
+    checkFarDateWarning();
   }
 
   function loadRemotePlan(){
@@ -1206,6 +1274,10 @@
   });
   closeBtn.addEventListener('click', ()=> overlay.classList.remove('open'));
   overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.classList.remove('open'); });
+
+  closeNeglect.addEventListener('click', ()=> neglectOverlay.classList.remove('open'));
+  neglectOkBtn.addEventListener('click', ()=> neglectOverlay.classList.remove('open'));
+  neglectOverlay.addEventListener('click', (e)=>{ if(e.target===neglectOverlay) neglectOverlay.classList.remove('open'); });
 
   renderCalendar();
   loadRemotePlan();
