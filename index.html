@@ -44,9 +44,9 @@
     100%{background-position:0% 50%;}
   }
 
-  /* soft glow blobs */
+  /* soft glow blobs — fixed, hogy görgetéskor is a látható képernyőhöz igazodjanak, ne a teljes (esetleg magasabb) oldalhoz */
   .blob{
-    position:absolute;
+    position:fixed;
     border-radius:50%;
     filter: blur(50px);
     opacity:0.45;
@@ -56,9 +56,9 @@
   .blob2{width:32vmax; height:32vmax; background:#ffe08a; bottom:-14vmax; right:-8vmax;}
   .blob3{width:26vmax; height:26vmax; background:#c9a6ff; bottom:10vmax; left:-10vmax;}
 
-  /* floating hearts & sparkles */
+  /* floating hearts & sparkles — fixed, hogy mindig a látható képernyő aljától induljanak, ne a teljes (görgetett) oldal aljától */
   .float-item{
-    position:absolute;
+    position:fixed;
     top:110%;
     user-select:none;
     pointer-events:none;
