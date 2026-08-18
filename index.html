@@ -666,7 +666,7 @@
       <button class="cal-close" id="closeNeglect">✕</button>
       <div class="neglect-emoji">🥺</div>
       <p class="neglect-text">Jól eltetted,<br>ennyit nem bíroook ki 🥺</p>
-      <button type="button" class="neglect-btn" id="neglectOkBtn">Bocsi, tudom 💕</button>
+      <button type="button" class="neglect-btn" id="neglectOkBtn">Más napok választása 🗓️</button>
     </div>
   </div>
 
@@ -1017,21 +1017,10 @@
   }
 
   // ---- "ennyit nem bírok ki" figyelmeztetés, ha a kiválasztott nap 2 hétnél messzebb van ----
+  // Az első ilyen próbálkozásnál NEM ment és NEM küld emailt, csak felugrik a figyelmeztetés.
+  // Utána — akár ugyanazt, akár más napot választja — a következő megerősítés már átmegy.
   const FAR_DATE_WARNING_DAYS = 14;
-  let lastFarWarnKey = null; // ne dobja fel újra ugyanarra a már megjelenített dátumra
-
-  function checkFarDateWarning(){
-    if(!confirmedStart) return;
-    const target = new Date(confirmedStart);
-    target.setHours(0,0,0,0);
-    const daysUntil = Math.round((target - today) / 86400000);
-
-    const key = dateKey(confirmedStart) + '_' + dateKey(confirmedEnd);
-    if(daysUntil > FAR_DATE_WARNING_DAYS && lastFarWarnKey !== key){
-      lastFarWarnKey = key;
-      neglectOverlay.classList.add('open');
-    }
-  }
+  let farDateWarningAcknowledged = false;
 
   // applies an already-confirmed plan to the UI (used both after a fresh confirm and when
   // loading/syncing a plan that was confirmed on another device)
@@ -1055,7 +1044,6 @@
 
     renderCalendar();
     startCountdown();
-    checkFarDateWarning();
   }
 
   function loadRemotePlan(){
@@ -1204,6 +1192,17 @@
 
   confirmBtn.addEventListener('click', ()=>{
     if(!rangeStart || !rangeEnd) return;
+
+    const target = new Date(rangeStart);
+    target.setHours(0,0,0,0);
+    const daysUntil = Math.round((target - today) / 86400000);
+
+    if(daysUntil > FAR_DATE_WARNING_DAYS && !farDateWarningAcknowledged){
+      farDateWarningAcknowledged = true;
+      neglectOverlay.classList.add('open');
+      return; // első próbálkozásra még nem ment és nem küld emailt
+    }
+
     confirmed = true;
     burstHearts(confirmBtn);
 
@@ -1231,6 +1230,7 @@
     rangeStart = null;
     rangeEnd = null;
     confirmed = false;
+    farDateWarningAcknowledged = false; // új választási kör — a figyelmeztetés újra elsőnek számít
     successMsg.classList.remove('show');
     resetLink.style.display = 'none';
     postActions.classList.remove('show');
@@ -1276,7 +1276,15 @@
   overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.classList.remove('open'); });
 
   closeNeglect.addEventListener('click', ()=> neglectOverlay.classList.remove('open'));
-  neglectOkBtn.addEventListener('click', ()=> neglectOverlay.classList.remove('open'));
+  neglectOkBtn.addEventListener('click', ()=>{
+    neglectOverlay.classList.remove('open');
+    // tiszta lappal indul a napválasztás — a naptár úgyis újrakezdi a kijelölést,
+    // ha mégis ugyanarra a napra kattint, ez most már át fog menni
+    rangeStart = null;
+    rangeEnd = null;
+    renderCalendar();
+    updateFooterAndActions();
+  });
   neglectOverlay.addEventListener('click', (e)=>{ if(e.target===neglectOverlay) neglectOverlay.classList.remove('open'); });
 
   renderCalendar();
