@@ -597,6 +597,28 @@
   .neglect-btn:hover{ box-shadow: 0 12px 26px rgba(176,108,255,0.5); transform: translateY(-2px) scale(1.02); }
   .neglect-btn:active{ transform: scale(0.96); }
 
+  /* ---- zene ki/be kapcsoló, ami a megerősítés után jelenik meg ---- */
+  .music-toggle{
+    position:fixed;
+    right:16px;
+    bottom:16px;
+    z-index:40;
+    border:none;
+    cursor:pointer;
+    padding:9px 16px;
+    border-radius:999px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:0.82rem;
+    color:var(--ink);
+    background: var(--card);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 20px rgba(90,20,60,0.22);
+    transition: transform .15s ease, box-shadow .18s ease;
+  }
+  .music-toggle:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(90,20,60,0.3); }
+  .music-toggle:active{ transform: translateY(0) scale(0.96); }
+
 </style>
 </head>
 <body>
@@ -673,6 +695,13 @@
       <button type="button" class="neglect-btn" id="neglectOkBtn">Más napok választása 🗓️</button>
     </div>
   </div>
+
+  <!-- rejtett YouTube lejátszó — csak a zenét szolgáltatja, nem látszik -->
+  <div id="bgMusicPlayer" style="position:fixed; left:-9999px; top:-9999px; width:2px; height:2px; overflow:hidden;"></div>
+  <button type="button" class="music-toggle" id="musicToggle" style="display:none;">🎵 Zene ki</button>
+
+<!-- YouTube IFrame API (a megerősítés utáni zenéhez) -->
+<script src="https://www.youtube.com/iframe_api"></script>
 
 <!-- Firebase (megosztott, eszközök közötti tárolás) és EmailJS (automatikus emailküldés) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -772,6 +801,7 @@
   const neglectOverlay = document.getElementById('neglectOverlay');
   const closeNeglect = document.getElementById('closeNeglect');
   const neglectOkBtn = document.getElementById('neglectOkBtn');
+  const musicToggle = document.getElementById('musicToggle');
 
   const dowNames = ['H','K','Sze','Cs','P','Szo','V'];
   const monthNames = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
@@ -1194,6 +1224,55 @@
     countdownInterval = setInterval(updateCountdown, 30000);
   }
 
+  // ---- ünnepi zene, ami akkor indul el, amikor tényleg sikeresen megerősítette a napokat ----
+  const BG_MUSIC_VIDEO_ID = 'XMwZu5uSXYc';
+  let ytPlayer = null;
+  let ytPlayerReady = false;
+  let pendingPlayMusic = false;
+  let musicPlaying = false;
+
+  window.onYouTubeIframeAPIReady = function(){
+    try{
+      ytPlayer = new YT.Player('bgMusicPlayer', {
+        videoId: BG_MUSIC_VIDEO_ID,
+        playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: BG_MUSIC_VIDEO_ID },
+        events: {
+          onReady: function(){
+            ytPlayerReady = true;
+            if(pendingPlayMusic){
+              pendingPlayMusic = false;
+              startMusic();
+            }
+          }
+        }
+      });
+    } catch(e){ console.warn('YouTube player init hiba:', e); }
+  };
+
+  function startMusic(){
+    if(ytPlayerReady && ytPlayer){
+      ytPlayer.playVideo();
+      musicPlaying = true;
+      musicToggle.textContent = '🎵 Zene ki';
+      musicToggle.style.display = 'inline-block';
+    } else {
+      pendingPlayMusic = true;
+    }
+  }
+
+  musicToggle.addEventListener('click', ()=>{
+    if(!ytPlayer) return;
+    if(musicPlaying){
+      ytPlayer.pauseVideo();
+      musicPlaying = false;
+      musicToggle.textContent = '🎵 Zene be';
+    } else {
+      ytPlayer.playVideo();
+      musicPlaying = true;
+      musicToggle.textContent = '🎵 Zene ki';
+    }
+  });
+
   confirmBtn.addEventListener('click', ()=>{
     if(!rangeStart || !rangeEnd) return;
 
@@ -1209,6 +1288,7 @@
 
     confirmed = true;
     burstHearts(confirmBtn);
+    startMusic();
 
     // snapshot the confirmed choice
     confirmedName = 'kedvesem';
