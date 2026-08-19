@@ -713,7 +713,7 @@
   <!-- rejtett YouTube lejátszó — csak a zenét szolgáltatja, nem látszik -->
   <div id="bgMusicPlayer" style="position:fixed; left:-9999px; top:-9999px; width:2px; height:2px; overflow:hidden;"></div>
   <div class="music-controls" id="musicControls" style="display:none;">
-    <button type="button" class="music-toggle" id="musicToggle" aria-label="Zene ki/be">⏸️</button>
+    <button type="button" class="music-toggle" id="musicToggle" aria-label="Zene ki/be">▶️</button>
     <input type="range" id="musicVolume" class="music-volume" min="0" max="100" value="50">
   </div>
 
@@ -1097,6 +1097,12 @@
 
     renderCalendar();
     startCountdown();
+
+    // zene: friss megerősítéskor és újratöltés/másik eszközön betöltéskor is —
+    // ha a böngésző a lejátszást (hang nélküli felhasználói interakció hiányában) blokkolja,
+    // a vezérlő sáv akkor is látszik, és a ▶️ gombbal kézzel elindítható
+    musicControls.style.display = 'flex';
+    startMusic();
   }
 
   function loadRemotePlan(){
@@ -1264,18 +1270,30 @@
               pendingPlayMusic = false;
               startMusic();
             }
-          }
+          },
+          onStateChange: onPlayerStateChange
         }
       });
     } catch(e){ console.warn('YouTube player init hiba:', e); }
   };
 
+  // a gomb ikonja mindig a lejátszó VALÓDI állapotát tükrözi — ez azért fontos, mert
+  // oldal-újratöltéskor (felhasználói kattintás nélkül) a böngésző elnémítás nélkül
+  // gyakran blokkolja az automatikus lejátszást; ilyenkor ez marad ▶️, és onnan
+  // kézzel, egy tényleges kattintással már biztosan elindítható
+  function onPlayerStateChange(event){
+    if(event.data === YT.PlayerState.PLAYING){
+      musicPlaying = true;
+      musicToggle.textContent = '⏸️';
+    } else if(event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED){
+      musicPlaying = false;
+      musicToggle.textContent = '▶️';
+    }
+  }
+
   function startMusic(){
     if(ytPlayerReady && ytPlayer){
       ytPlayer.playVideo();
-      musicPlaying = true;
-      musicToggle.textContent = '⏸️';
-      musicControls.style.display = 'flex';
     } else {
       pendingPlayMusic = true;
     }
@@ -1285,12 +1303,8 @@
     if(!ytPlayer) return;
     if(musicPlaying){
       ytPlayer.pauseVideo();
-      musicPlaying = false;
-      musicToggle.textContent = '▶️';
     } else {
       ytPlayer.playVideo();
-      musicPlaying = true;
-      musicToggle.textContent = '⏸️';
     }
   });
 
@@ -1315,7 +1329,7 @@
 
     confirmed = true;
     burstHearts(confirmBtn);
-    startMusic();
+    // a zenét a showConfirmedUI() indítja el (az is fut, ha máskor/máshol tölti be a mentett tervet)
 
     // snapshot the confirmed choice
     confirmedName = 'kedvesem';
