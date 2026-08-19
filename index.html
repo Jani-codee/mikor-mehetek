@@ -597,27 +597,41 @@
   .neglect-btn:hover{ box-shadow: 0 12px 26px rgba(176,108,255,0.5); transform: translateY(-2px) scale(1.02); }
   .neglect-btn:active{ transform: scale(0.96); }
 
-  /* ---- zene ki/be kapcsoló, ami a megerősítés után jelenik meg ---- */
-  .music-toggle{
+  /* ---- zene vezérlő sáv (ki/be + hangerő), ami a megerősítés után jelenik meg ---- */
+  .music-controls{
     position:fixed;
     right:16px;
     bottom:16px;
     z-index:40;
-    border:none;
-    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
     padding:9px 16px;
     border-radius:999px;
-    font-family:'Baloo 2', sans-serif;
-    font-weight:700;
-    font-size:0.82rem;
-    color:var(--ink);
     background: var(--card);
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 20px rgba(90,20,60,0.22);
-    transition: transform .15s ease, box-shadow .18s ease;
   }
-  .music-toggle:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(90,20,60,0.3); }
-  .music-toggle:active{ transform: translateY(0) scale(0.96); }
+  .music-toggle{
+    border:none;
+    background:none;
+    cursor:pointer;
+    padding:0;
+    font-size:1.1rem;
+    line-height:1;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    transition: transform .15s ease;
+  }
+  .music-toggle:hover{ transform: scale(1.15); }
+  .music-toggle:active{ transform: scale(0.92); }
+  .music-volume{
+    width:72px;
+    height:4px;
+    accent-color: var(--pink);
+    cursor:pointer;
+  }
 
 </style>
 </head>
@@ -698,7 +712,10 @@
 
   <!-- rejtett YouTube lejátszó — csak a zenét szolgáltatja, nem látszik -->
   <div id="bgMusicPlayer" style="position:fixed; left:-9999px; top:-9999px; width:2px; height:2px; overflow:hidden;"></div>
-  <button type="button" class="music-toggle" id="musicToggle" style="display:none;">🎵 Zene ki</button>
+  <div class="music-controls" id="musicControls" style="display:none;">
+    <button type="button" class="music-toggle" id="musicToggle" aria-label="Zene ki/be">⏸️</button>
+    <input type="range" id="musicVolume" class="music-volume" min="0" max="100" value="50">
+  </div>
 
 <!-- YouTube IFrame API (a megerősítés utáni zenéhez) -->
 <script src="https://www.youtube.com/iframe_api"></script>
@@ -801,7 +818,9 @@
   const neglectOverlay = document.getElementById('neglectOverlay');
   const closeNeglect = document.getElementById('closeNeglect');
   const neglectOkBtn = document.getElementById('neglectOkBtn');
+  const musicControls = document.getElementById('musicControls');
   const musicToggle = document.getElementById('musicToggle');
+  const musicVolume = document.getElementById('musicVolume');
 
   const dowNames = ['H','K','Sze','Cs','P','Szo','V'];
   const monthNames = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
@@ -1226,6 +1245,7 @@
 
   // ---- ünnepi zene, ami akkor indul el, amikor tényleg sikeresen megerősítette a napokat ----
   const BG_MUSIC_VIDEO_ID = 'XMwZu5uSXYc';
+  const DEFAULT_MUSIC_VOLUME = 50; // ne induljon fülsértően hangosan
   let ytPlayer = null;
   let ytPlayerReady = false;
   let pendingPlayMusic = false;
@@ -1239,6 +1259,7 @@
         events: {
           onReady: function(){
             ytPlayerReady = true;
+            ytPlayer.setVolume(DEFAULT_MUSIC_VOLUME);
             if(pendingPlayMusic){
               pendingPlayMusic = false;
               startMusic();
@@ -1253,8 +1274,8 @@
     if(ytPlayerReady && ytPlayer){
       ytPlayer.playVideo();
       musicPlaying = true;
-      musicToggle.textContent = '🎵 Zene ki';
-      musicToggle.style.display = 'inline-block';
+      musicToggle.textContent = '⏸️';
+      musicControls.style.display = 'flex';
     } else {
       pendingPlayMusic = true;
     }
@@ -1265,11 +1286,17 @@
     if(musicPlaying){
       ytPlayer.pauseVideo();
       musicPlaying = false;
-      musicToggle.textContent = '🎵 Zene be';
+      musicToggle.textContent = '▶️';
     } else {
       ytPlayer.playVideo();
       musicPlaying = true;
-      musicToggle.textContent = '🎵 Zene ki';
+      musicToggle.textContent = '⏸️';
+    }
+  });
+
+  musicVolume.addEventListener('input', ()=>{
+    if(ytPlayer && ytPlayerReady){
+      ytPlayer.setVolume(parseInt(musicVolume.value, 10));
     }
   });
 
